@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const API_URL = 'http://13.230.0.143/api';
+const API_URL = 'https://dev.kiitos-childcare.com/api';
 
 export const login = async (email: string, password: string) => {
   try {
