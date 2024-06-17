@@ -15,6 +15,7 @@ const HomePage: React.FC = () => {
     } else {
       setIsAuthenticated(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!isAuthenticated) {

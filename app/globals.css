@@ -31,3 +31,13 @@ body {
     text-wrap: balance;
   }
 }
+
+.bg-blue-base {
+  background-color: #3CB1F4;
+}
+.bg-navy-base {
+  background-color: #000080;
+}
+.bg-navy-base:hover {
+  background-color: #3C8DCB;
+}
