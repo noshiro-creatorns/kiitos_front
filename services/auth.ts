@@ -10,8 +10,7 @@ export const login = async (email: string, password: string) => {
       password,
     });
     const { access, refresh } = response.data;
-
-    // JWTをクッキーに保存
+    
     Cookies.set('access_token', access, { expires: 7 });
     Cookies.set('refresh_token', refresh, { expires: 7 });
 

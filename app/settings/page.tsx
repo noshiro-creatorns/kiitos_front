@@ -6,7 +6,7 @@ import { getAccessToken } from '../../services/auth';
 import Header from '../../components/Header';
 import HamburgerMenu from '../../components/HamburgerMenu';
 
-const HomePage: React.FC = () => {
+const SettingsPage: React.FC = () => {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -32,13 +32,11 @@ const HomePage: React.FC = () => {
         <Header/>
         <HamburgerMenu />
         <div className='base-page-margin'>
-            <h1>ホーム画面</h1>
-            <p>保護者からの新規連絡（未読分）を表示</p>
-            <p>欠席情報の本日分登録状況を表示</p>
-            <p>システムからのお知らせを表示</p>
+            <h1>設定画面</h1>
+            <p>各マスター画面への遷移元画面</p>
         </div>
     </div>
   );
 };
 
-export default HomePage;
+export default SettingsPage;

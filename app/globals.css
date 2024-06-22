@@ -17,13 +17,8 @@
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  color: #000;
+  background: #fff;
 }
 
 @layer utilities {
@@ -40,4 +35,14 @@ body {
 }
 .bg-navy-base:hover {
   background-color: #3C8DCB;
+}
+.bg-right-blue-base {
+  background-color: #39B6D3;
+}
+.bg-dark-blue {
+  background-color: #23527C;
+}
+
+.base-page-margin {
+  padding: 10px;
 }

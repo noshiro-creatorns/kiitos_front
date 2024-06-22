@@ -1,0 +1,59 @@
+.hamburgerMenu {
+    position: fixed;
+    top: 7px;
+    right: 50px;
+}
+
+.hamburgerButton {
+    font-size: 24px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    position: absolute;
+    color: #3CB1F4;/* ボタンの色 */
+    background-color: #fff;
+    padding: 0 10px 5px 10px;
+    border-radius: 5px;
+}
+.hamburgerButton.open {
+    color: #fff;
+    background-color: #23527C;
+}
+  
+.menu {
+    position: absolute;
+    top: 60px;
+    right: -200px; /* 初期位置を画面外に設定 */
+    width: 250px;
+    color: white; /* メニューのテキスト色 */
+    padding: 20px;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(100%);
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+}
+
+.menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-160px);
+    background-color: #3CB1F4;
+}
+  
+.menu a {
+    display: block;
+    padding: 10px 10px 10px 5px;
+    text-decoration: none;
+    color: white;
+}
+
+.menu a:hover {
+    background-color: #3C8DCB;
+}
+
+.menu_icon {
+    display: inline-block;
+    margin-right: 0.5em;
+}
