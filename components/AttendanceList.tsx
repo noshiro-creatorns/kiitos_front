@@ -4,6 +4,8 @@ import Select, { SingleValue } from 'react-select';
 import { format } from 'date-fns';
 import { getAccessToken, refreshToken } from '../services/auth';
 import { useRouter } from 'next/navigation';
+import styles from './AttendanceList.module.css';
+import { AttendanceModal } from './AttendanceModal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -13,22 +15,25 @@ interface Class {
     class_name: string;
 }
 
-/**
 interface Student {
     id: number;
-    name: string;
-    classId: number;
+    class_info: number;
+    student_info: {first_name: string, last_name: string}
 }
-*/
 
 interface AttendanceRecord {
     id: number;
-    classId: number;
-    year: number;
-    month: number;
-    studentId: number;
+    child: number;
     date: Date;
-    status: string;
+    attendance_type: string;
+    absence_suspension_setting: number;
+    arrival_time: string;
+    departure_time: string;
+    other_details: string;
+    created_at: string;
+    created_by: number;
+    updated_at: string;
+    updated_by: number;
 }
   
 type AttendanceStatus = '出席' | '欠席' | '出席停止' | '早退' | '遅刻' | 'その他';
@@ -38,8 +43,7 @@ const AttendanceList: React.FC = () => {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1); // 0始まりなので+1
     const [selectedClass, setSelectedClass] = useState('');
-    // const [students, setStudents] = useState<Student[]>([]);
-    const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
   
     // 年が選択されたときの処理
     const handleYearChange = (selectedYearOption: SingleValue<{ value: number; label: string; }>) => {
@@ -118,6 +122,48 @@ const AttendanceList: React.FC = () => {
         fetchClasses();
     }, [selectedYear, selectedMonth, router]);
 
+    // 園児一覧取得
+    const [studentLoading, setStudentLoading] = useState(false);
+    const [studentError, setStudentError] = useState(null);
+    const [students, setStudents] = useState<Student[]>([]);
+
+    useEffect(() => {
+        const fetchChildren = async () => {
+            const nendo = getAcademicYear(selectedYear, selectedMonth);
+            const token = getAccessToken();
+
+            setStudentLoading(true); // 生徒の読み込み開始
+            try {
+                const response = await axios.get(`${API_URL}/student-yearly-info-lists?year=${nendo}&class_id=${selectedClass}`, {
+                    headers: {
+                        'Content-type': 'application/json',
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                if (response.status === 200) {
+                    setStudents(response.data);
+                    // const children_array = response.data;
+                    // children_array.map((element: any) => console.log(element.student_info.first_name));
+                    setStudentError(null);
+                }
+            } catch (error) {
+                const axiosError = error as AxiosError;
+                if (axiosError.response?.status === 401) {
+                    try {
+                        await refreshToken();
+                    } catch (error) {
+                        router.push('/login')
+                    }
+
+                    fetchChildren();
+                }
+            }
+            setStudentLoading(false); // 生徒の読み込み終了
+        };
+        fetchChildren();
+    }, [selectedYear, selectedMonth, selectedClass, router]);
+
     // クラス選択用のオプションを生成
     const classOptions = classes.map((cls) => ({
         value: cls.id.toString(),
@@ -126,49 +172,34 @@ const AttendanceList: React.FC = () => {
 
     // 状態の追加
     const [attendanceLoading, setAttendanceLoading] = useState(false);
-    const [studentLoading, setStudentLoading] = useState(false);
     const [attendanceError, setAttendanceError] = useState(null);
-    const [studentError, setStudentError] = useState(null);
-
-    /**
-    // useEffect内で状態を更新
-    useEffect(() => {
-        const fetchClasses = async () => {
-            setStudentLoading(true); // 生徒の読み込み開始
-            try {
-                const response = await axios.get(`/api/students?classId=${selectedClass}`);
-                if (response.status === 200) {
-                    setStudents(response.data);
-                    setStudentError(null);
-                }
-            } catch (error) {
-                setStudentError(error);
-            }
-            setStudentLoading(false); // 生徒の読み込み終了
-        };
-        fetchClasses();
-    }, [selectedClass]);
-    */
+    const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+    
     useEffect(() => {
         const fetchAttendanceRecords = async () => {
-            setAttendanceLoading(true); // 出席簿の読み込み開始
-            /**
+            setAttendanceLoading(true); // 生徒の読み込み開始
+            
+            const nendo = getAcademicYear(selectedYear, selectedMonth);
+            const token = getAccessToken();
             try {
-                const response = await axios.get(
-                    `/api/attendance-records?classId=${selectedClass}&year=${selectedYear}&month=${selectedMonth}`,
-                );
+                const response = await axios.get(`${API_URL}/attendance-list?class_id=${selectedClass}&year=${selectedYear}&month=${selectedMonth}`, {
+                    headers: {
+                        'Content-type': 'application/json',
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
                 if (response.status === 200) {
                     setAttendanceRecords(response.data);
                     setAttendanceError(null);
                 }
             } catch (error) {
-                // setAttendanceError(error);
+                router.push('/login')
             }
-            */
-            setAttendanceLoading(false); // 出席簿の読み込み終了
+            setAttendanceLoading(false); // 生徒の読み込み終了
         };
         fetchAttendanceRecords();
-    }, [selectedClass, selectedYear, selectedMonth]);
+    }, [selectedClass, selectedYear, selectedMonth, router]);
 
     const setClassValue = () => {
         const classValue = classOptions.find((option) => option.value === selectedClass)
@@ -178,9 +209,19 @@ const AttendanceList: React.FC = () => {
         return classValue
     }
 
+    const getDaysInMonth = (year: number, month: number): number => {
+        return new Date(year, month, 0).getDate();
+    };
+
+    const [selectedDate, setSelectedDate] = useState<{ date: string; childId: number } | null>(null);
+
+    const handleCellClick = (date: string, childId: number) => {
+        setSelectedDate({ date, childId });
+        setIsModalOpen(true); // モーダルを開く
+    };
 
     return (
-        <div className="attendance-list">
+        <div >
             <h1>出席簿</h1>
             <div>
                 <Select
@@ -202,43 +243,89 @@ const AttendanceList: React.FC = () => {
                     placeholder="クラスを選択"
                 />
             </div>
-          {/**
-          {attendanceLoading || studentLoading ? (
+          {
+            attendanceLoading || studentLoading ? (
             <div className="loading">読み込み中...</div>
           ) : attendanceError || studentError ? (
             <div className="error">エラーが発生しました。</div>
           ) : (
-            <table className="attendance-table">
-              <thead>
-                <tr>
-                  <th>生徒名</th>
-                  {Array.from({ length: getDaysInMonth(selectedYear, selectedMonth) }, (_, i) => i + 1).map((
-                    day
-                  ) => (
-                    <th key={day}>{format(new Date(selectedYear, selectedMonth - 1, day), 'd')}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {students.map((student) => (
-                  <tr key={student.id}>
-                    <td>{student.name}</td>
-                    {attendanceRecords
-                      .filter((record) => record.studentId === student.id)
-                      .map((record) => (
-                        <td
-                          key={record.id}
-                          className={record.status === '出席' ? 'attendance' : record.status}
-                        >
-                          {record.status === '出席' ? '○' : record.status}
-                        </td>
-                      ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className={styles.table_container}>
+                <table className={styles.attendance_list}>
+                    <thead>
+                        <tr>
+                            <th>生徒名</th>
+                            {Array.from({ length: getDaysInMonth(selectedYear, selectedMonth) }, (_, i) => i + 1).map((
+                                day
+                            ) => (
+                                <th key={day}>{format(new Date(selectedYear, selectedMonth - 1, day), 'd')}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                <tbody>
+                    {students.map((student) => (
+                    <tr key={student.id}>
+                        <td>{student.student_info.first_name + ' ' + student.student_info.last_name}</td>
+                        {Array.from({ length: getDaysInMonth(selectedYear, selectedMonth) }, (_, i) => {
+                            const day = i + 1;
+                            const set_date = selectedYear + '/' + selectedMonth + '/' + day;
+                            const record = attendanceRecords.find(
+                                (record) => record.child === student.id && new Date(record.date).getDate() === day
+                            );
+                            return (
+                                <td key={day} className={record ? record.attendance_type : ''} onClick={() => handleCellClick(set_date, student.id)}>
+                                    {record ? (
+                                        <span title={record.attendance_type === 'その他' ? record.other_details : ''}>
+                                            {record.attendance_type === '出席' ? '○' :
+                                            record.attendance_type === '遅刻' ? '遅' :
+                                            record.attendance_type === '早退' ? '早' :
+                                            record.attendance_type === '出席停止' ? '停' :
+                                            record.attendance_type === '欠席' ? '欠' :
+                                            record.attendance_type === 'その他' ? '他' :
+                                            record.attendance_type}
+                                        </span>
+                                    ) : ''}
+                                </td>
+                            );
+                        })}
+                    </tr>
+                    ))}
+                </tbody>
+                </table>
+                {isModalOpen && selectedDate && (
+                    <AttendanceModal
+                        isAdmin={true}
+                        date={selectedDate.date} // Date型をstring型に変換
+                        childId={selectedDate.childId}
+                        closeModal={() => setIsModalOpen(false)}
+                        refreshData={() => {
+                            const fetchAttendanceRecords = async () => {
+                                setAttendanceLoading(true); // 生徒の読み込み開始
+                                
+                                const nendo = getAcademicYear(selectedYear, selectedMonth);
+                                const token = getAccessToken();
+                                try {
+                                    const response = await axios.get(`${API_URL}/attendance-list?class_id=${selectedClass}&year=${selectedYear}&month=${selectedMonth}`, {
+                                        headers: {
+                                            'Content-type': 'application/json',
+                                            Accept: 'application/json',
+                                            Authorization: `Bearer ${token}`,
+                                        },
+                                    });
+                                    if (response.status === 200) {
+                                        setAttendanceRecords(response.data);
+                                        setAttendanceError(null);
+                                    }
+                                } catch (error) {
+                                    router.push('/login')
+                                }
+                                setAttendanceLoading(false); // 生徒の読み込み終了
+                            };
+                            fetchAttendanceRecords();
+                        }}
+                    />
+                )}
+            </div>
           )}
-          */}
         </div>
       );
       };
