@@ -141,6 +141,7 @@ const AttendanceList: React.FC = () => {
                         Authorization: `Bearer ${token}`,
                     },
                 });
+                
                 if (response.status === 200) {
                     setStudents(response.data);
                     // const children_array = response.data;
@@ -161,7 +162,9 @@ const AttendanceList: React.FC = () => {
             }
             setStudentLoading(false); // 生徒の読み込み終了
         };
-        fetchChildren();
+        if (selectedClass) {
+            fetchChildren();
+        }
     }, [selectedYear, selectedMonth, selectedClass, router]);
 
     // クラス選択用のオプションを生成
@@ -177,28 +180,31 @@ const AttendanceList: React.FC = () => {
     
     useEffect(() => {
         const fetchAttendanceRecords = async () => {
+            const token = getAccessToken();
             setAttendanceLoading(true); // 生徒の読み込み開始
             
-            const nendo = getAcademicYear(selectedYear, selectedMonth);
-            const token = getAccessToken();
             try {
-                const response = await axios.get(`${API_URL}/attendance-list?class_id=${selectedClass}&year=${selectedYear}&month=${selectedMonth}`, {
+                const response = await axios.get(`${API_URL}/attendances?class_id=${selectedClass}&year=${selectedYear}&month=${selectedMonth}`, {
                     headers: {
                         'Content-type': 'application/json',
                         Accept: 'application/json',
                         Authorization: `Bearer ${token}`,
                     },
                 });
+                
                 if (response.status === 200) {
                     setAttendanceRecords(response.data);
                     setAttendanceError(null);
                 }
             } catch (error) {
-                router.push('/login')
+                // router.push('/login')
+                console.log(error)
             }
             setAttendanceLoading(false); // 生徒の読み込み終了
         };
-        fetchAttendanceRecords();
+        if (selectedClass) {
+            fetchAttendanceRecords();
+        }
     }, [selectedClass, selectedYear, selectedMonth, router]);
 
     const setClassValue = () => {
@@ -304,7 +310,7 @@ const AttendanceList: React.FC = () => {
                                 const nendo = getAcademicYear(selectedYear, selectedMonth);
                                 const token = getAccessToken();
                                 try {
-                                    const response = await axios.get(`${API_URL}/attendance-list?class_id=${selectedClass}&year=${selectedYear}&month=${selectedMonth}`, {
+                                    const response = await axios.get(`${API_URL}/attendances?class_id=${selectedClass}&year=${selectedYear}&month=${selectedMonth}`, {
                                         headers: {
                                             'Content-type': 'application/json',
                                             Accept: 'application/json',
